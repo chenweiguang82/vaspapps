@@ -1,0 +1,52 @@
+#!/bin/sh
+
+# pick up the Lattice Vector
+sed -n '/BLOCK LATTICE_CART/,/ENDBLOCK LATTICE_CART/ p' $1 | grep -v LATTICE_CART > lat_temp
+# pick up the Position ordination of Atoms in Fractral style
+sed -n '/BLOCK POSITIONS_FRAC/,/ENDBLOCK POSITIONS_FRAC/ p' $1 | grep -v POSITIONS_FRAC > pos_temp
+# obtain the number of Species
+sed -n '/BLOCK SPECIES_LCAO_STATES/,/ENDBLOCK SPECIES_LCAO_STATES/ p' $1 |grep -v SPECIES_LCAO_STATES > species_temp
+species=`wc -l species_temp`
+
+#sed -n '1~2p' species_temp > temp
+awk '{print $1}' species_temp > temp
+mv -f temp species_temp
+
+for i in `cat species_temp`
+do
+	  echo -n $i'   '  >> POSCAR
+# split the every elements
+	  grep "\<$i\>" pos_temp > pos_$i
+# modify the pos_element
+	  sed -e 's/$/\ \ \ T\ \ \ T\ \ \ T/' pos_$i > temp
+	  colrm 1 4 < temp > temp1
+	  mv -f temp1 temp
+# sort the ordination as the C-
+	  sort -r -n -k 3 temp > temp1
+	  mv -f temp1 temp
+	  mv temp  pos_$i
+done
+echo >> POSCAR
+# delete the pos files
+rm -f pos_temp
+
+# add the default lattice factor 1.000
+echo '  '1.000 >> POSCAR
+# add the Lattice Vector
+cat lat_temp >> POSCAR
+
+# add the number of every species
+echo -n '  ' >> POSCAR
+for i in `cat species_temp`
+do
+	  atoms=`wc -l pos_$i|awk '{print $1}'`
+	  echo -n $atoms'   '  >> POSCAR
+done
+echo >> POSCAR
+#delete the speies file
+rm -f species_temp
+# delete the temp files
+rm -f lat_temp
+
+echo 'Selective Dynamics' >> POSCAR
+echo 'Direct' >> POSCAR
