@@ -13,6 +13,7 @@ for ($i=0;$i<$ntype;$i++){
 	$natom=$natom+$type[$i];
 }
 
+# For vasp 4 version.
 system ("sed -n '1,8 p' POSCAR >tmpfile");
 $total=8+$natom;
 system ("sed -n '9,'$total' p' POSCAR>tmpfile1");
